@@ -2,6 +2,7 @@
 #include "tray.h"
 #include "tracker.h"
 #include "prefs.h"
+#include "startup.h"
 #include "../core/knit_core.h"
 #include "../core/charts.h"
 #include "../core/apps.h"
@@ -15,6 +16,7 @@
 #define IDM_APP_BASE 2000
 #define IDM_OFFALL 1010
 #define IDM_ONALL 1011
+#define IDM_STARTUP 1012
 #define IDM_PAT_BYAPP 1100
 #define IDM_PAT_NONE 1101
 #define IDM_PAT_BASE 1200 // + chart index (max 128 charts)
@@ -95,12 +97,14 @@ void tray_show_menu(HWND wnd) {
   AppendMenuA(apps, MF_STRING, IDM_OFFALL, "Turn Off for All Apps");
   AppendMenuA(menu, MF_POPUP, (UINT_PTR)apps, "Apps");
   AppendMenuA(menu, MF_SEPARATOR, 0, NULL);
-  AppendMenuA(menu, MF_STRING, IDM_QUIT, "Quit");
+  AppendMenuA(menu, MF_STRING | (startup_is_enabled() ? MF_CHECKED : 0), IDM_STARTUP, "Run on Startup");
+  AppendMenuA(menu, MF_STRING, IDM_QUIT, "Quit Window Sweaters");
   POINT p; GetCursorPos(&p);
   SetForegroundWindow(wnd);
   int cmd = TrackPopupMenu(menu, TPM_RETURNCMD | TPM_NONOTIFY | TPM_RIGHTBUTTON, p.x, p.y, 0, wnd, NULL);
   DestroyMenu(menu);
   if (cmd == IDM_QUIT) PostMessageW(wnd, WM_CLOSE, 0, 0);
+  else if (cmd == IDM_STARTUP) { startup_set(!startup_is_enabled()); }
   else if (cmd == IDM_ONOFF) { st->enabled = !st->enabled; tracker_repaint_all(); }
   else if (cmd == IDM_PAT_BYAPP) { knit_pattern_select("by-app"); knit_flush_cache(); tracker_repaint_all(); }
   else if (cmd == IDM_PAT_NONE) { knit_pattern_select("none"); knit_flush_cache(); tracker_repaint_all(); }

@@ -3,7 +3,10 @@
 #include "tracker.h"
 #include "../core/knit_core.h"
 #include <stdio.h>
+#include <string.h>
 static HANDLE g_mutex = NULL;
+static HWND g_quit_wnd = NULL;
+void ipc_set_quit_window(HWND w) { g_quit_wnd = w; }
 int ipc_claim_single(void) {
   g_mutex = CreateMutexW(NULL, TRUE, L"Global\\WindowSweaters");
   return GetLastError() != ERROR_ALREADY_EXISTS;
@@ -34,9 +37,17 @@ static DWORD WINAPI serve(LPVOID p) {
           lines[n++] = s;
           while (*s && *s != '\n' && *s != '\r') s++;
         }
-        uint32_t mask = parse_settings(tracker_settings(), n, lines);
-        if (mask & BORDER_UPDATE_MASK_RECREATE_ALL) tracker_apply_filter();
-        else if (mask) tracker_repaint_all();
+        // Scriptable close: "quit" goes through the same teardown as the
+        // tray menu instead of killing the overlays mid-paint.
+        int quit = 0;
+        for (int i = 0; i < n; i++) if (strcmp(lines[i], "quit") == 0) quit = 1;
+        if (quit) {
+          if (g_quit_wnd) PostMessageW(g_quit_wnd, WM_CLOSE, 0, 0);
+        } else {
+          uint32_t mask = parse_settings(tracker_settings(), n, lines);
+          if (mask & BORDER_UPDATE_MASK_RECREATE_ALL) tracker_apply_filter();
+          else if (mask) tracker_repaint_all();
+        }
       }
     }
     DisconnectNamedPipe(pipe); CloseHandle(pipe);

@@ -15,22 +15,22 @@ original to native Win32 (C, no frameworks, no runtime).
 - Global patterns: any of the 47 built-in charts, or plain; your own PNG
   charts in `%APPDATA%\WindowSweaters\charts\` override built-ins by name.
 - Per-app on/off that survives restarts, turn-off-for-all, tray menu for
-  pattern / stitch size / style / width / quit.
+  pattern / stitch size / style / width / run-on-startup / quit.
 - Everything persists to `%APPDATA%\WindowSweaters\settings.ini`.
 
 ## Get it
 
-Download the latest `WindowSweaters-<version>.zip` from
-[Releases](../../releases), unzip anywhere, and run `WindowSweaters.exe`.
-To start it with Windows, put a shortcut in the Startup folder
-(`Win+R` → `shell:startup`).
+Download `WindowSweaters.exe` from [Releases](../../releases) and run it —
+no installer, no admin rights. Tick **Run on Startup** in the tray menu to
+start it with Windows (per-user, removable from the same menu).
 
 No installer, no admin rights, no Accessibility prompts — it only reads window
 rectangles via DWM and draws its own transparent overlays.
 
 ## Use it
 
-Right-click the tray icon:
+Click the yarn tray icon (it lives in the notification overflow — the `^`
+hidden-icons popup — on stock Windows 11; any click opens the menu):
 
 - **Sweaters: On/Off** — pause everything without quitting.
 - **Pattern** — `By App` (default), `None (plain)`, or any chart globally.
@@ -38,6 +38,9 @@ Right-click the tray icon:
 - **Style** — Knit / Solid.
 - **Width** — Wider / Narrower (±2px, 4–40px).
 - **Apps** — tick apps on/off, or turn off/on for all apps. Choices persist.
+- **Run on Startup** — start with Windows for this user.
+- **Quit Window Sweaters** — graceful shutdown (same teardown every time).
+  Scriptable too: `WindowSweaters.exe quit` closes the running instance.
 
 ## Make it yours
 
@@ -67,6 +70,7 @@ A second instance forwards CLI args to the running one
 | `apps=reload` / `charts=reload` | reload configs without restart |
 | `blacklist=` / `whitelist=` | `blacklist=foo,bar` |
 | `order=` / `hidpi=` | `order=a`, `hidpi=on` |
+| `quit` | gracefully close the running instance |
 
 ## Build it yourself
 

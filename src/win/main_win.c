@@ -5,6 +5,7 @@
 #include <objbase.h>
 #include <shellapi.h>
 #include <stdio.h>
+#include <string.h>
 #include "tracker.h"
 #include "events.h"
 #include "tray.h"
@@ -20,7 +21,10 @@
 static LRESULT CALLBACK wndproc(HWND h, UINT m, WPARAM w, LPARAM l) {
   switch (m) {
     case WM_TRAY:
-      if (l == WM_RBUTTONUP || l == WM_LBUTTONUP) tray_show_menu(h);
+      // The icon lives in the notification overflow ("hidden icons") on
+      // stock Windows 11; any click — left, right, or double — opens the
+      // menu, whose last item quits the app.
+      if (l == WM_RBUTTONUP || l == WM_LBUTTONUP || l == WM_LBUTTONDBLCLK) tray_show_menu(h);
       return 0;
     case WM_HINT: {
       // Collapse event storms: one sync per pump, never a backlog. Reorder
@@ -92,6 +96,8 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, LPWSTR cmd, int show) {
   }
   int owns = ipc_claim_single();
   if (!owns) { ipc_forward_args(ac, argv); return 0; }
+  // Lone "quit" with no running instance: nothing to close, just exit.
+  if (ac == 2 && strcmp(argv[1], "quit") == 0) return 0;
 
   SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
   CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
@@ -111,6 +117,7 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, LPWSTR cmd, int show) {
   tray_install(msg, WM_TRAY);
   events_install(msg, WM_HINT);
   reconcile_start(msg, WM_HINT, 500); // full EnumWindows safety net, 2Hz
+  ipc_set_quit_window(msg);
   ipc_serve_begin();
   run_sweatersrc();
   tracker_refresh_full();
