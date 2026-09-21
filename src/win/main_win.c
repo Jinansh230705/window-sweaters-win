@@ -37,6 +37,17 @@ static LRESULT CALLBACK wndproc(HWND h, UINT m, WPARAM w, LPARAM l) {
       // NOTIFYICON_VERSION_4 activation messages: on some builds a left
       // click in the overflow arrives ONLY as NIN_SELECT, never as a
       // button-up, so handling just the button messages shows no menu.
+      // Drop stale clicks: under a paint storm a click can sit queued for
+      // seconds while the thread paints; opening a menu for it then looks
+      // random (the cursor has moved on) and its items feel dead (the
+      // backlog behind it still has to drain). Fresh clicks pass in ms.
+      {
+        ULONGLONG age = GetTickCount64() - (DWORD)GetMessageTime();
+        if (age > 1000) {
+          tray_log("drop stale tray event l=0x%x age=%llums", (unsigned)l, age);
+          return 0;
+        }
+      }
       tray_log("tray event l=0x%x w=%u", (unsigned)l, (unsigned)w);
       if (l == WM_RBUTTONUP || l == WM_LBUTTONUP || l == WM_LBUTTONDBLCLK
           || l == WM_RBUTTONDBLCLK || l == NIN_SELECT || l == NIN_KEYSELECT)
