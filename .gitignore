@@ -16,3 +16,7 @@ Thumbs.db
 
 # Local settings (user's own sweaters live here, not in git)
 # %APPDATA%\WindowSweaters\settings.ini is per-machine by design.
+
+# Python tooling
+__pycache__/
+*.pyc
