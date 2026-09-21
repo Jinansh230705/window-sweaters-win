@@ -1,2 +1,2 @@
 #include "resource.h"
-IDI_APP ICON "assets\\yarn.ico"
+IDI_APP ICON "assets\\sweater.ico"
