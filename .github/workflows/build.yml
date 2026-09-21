@@ -51,14 +51,16 @@ jobs:
         run: Compress-Archive -Path dist\* -DestinationPath WindowSweaters-${{ github.ref_name }}.zip
 
       # Rolling release: refreshed after every commit on main, so there is
-      # always a downloadable build without cutting a version tag.
+      # always a downloadable build without cutting a version tag. Published
+      # as a full release (not pre-release) so it shows up on the Releases
+      # page with the Latest badge.
       - name: Publish rolling release
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
           name: Latest build (main)
-          prerelease: true
+          prerelease: false
           files: WindowSweaters-${{ github.ref_name }}.zip
           generate_release_notes: true
 
