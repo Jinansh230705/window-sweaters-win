@@ -7,6 +7,11 @@ on:
     branches: [main]
     tags: ["v*"]
   pull_request:
+  # Fires when a release is created from the GitHub website ("Draft a new
+  # release"). Tag pushes alone do NOT cover that path, and without this the
+  # website-created release would ship source-code zips only.
+  release:
+    types: [published]
 
 jobs:
   build:
@@ -35,7 +40,7 @@ jobs:
           path: dist/
 
   release:
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' || github.event_name == 'release'
     needs: build
     runs-on: windows-latest
     permissions:
@@ -64,9 +69,11 @@ jobs:
           files: WindowSweaters-${{ github.ref_name }}.zip
           generate_release_notes: true
 
-      # Versioned release: push a v* tag (e.g. v1.0.0) to cut a stable release.
+      # Versioned release: push a v* tag (e.g. v1.0.0), or draft it on the
+      # website — both paths build the exe from scratch and attach the zip,
+      # so a tagged release never ships source-code zips only.
       - name: Publish versioned release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
           files: WindowSweaters-${{ github.ref_name }}.zip
