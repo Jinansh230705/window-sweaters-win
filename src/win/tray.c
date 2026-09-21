@@ -31,6 +31,8 @@ static const float kStitchGauge[] = { 9.f, 6.f, 3.5f };
 static const char* kStitchName[] = { "Fine", "Regular", "Chunky" };
 
 static NOTIFYICONDATAW ni;
+static int g_menu_open = 0;
+int tray_menu_open(void) { return g_menu_open; }
 
 // Debug trail: %TEMP%\ws_tray.log records registration results and every
 // callback the shell delivers. If clicks do nothing, this file says whether
@@ -109,6 +111,7 @@ void tray_show_menu(HWND wnd) {
   ULONGLONG now = GetTickCount64();
   if (now - last < 800) return;
   last = now;
+  g_menu_open = 1;
   struct settings* st = tracker_settings();
   HMENU menu = CreatePopupMenu();
   AppendMenuA(menu, MF_STRING | (st->enabled ? MF_CHECKED : 0), IDM_ONOFF, st->enabled ? "Sweaters: On" : "Sweaters: Off");
@@ -164,6 +167,7 @@ void tray_show_menu(HWND wnd) {
   PostMessageW(wnd, WM_NULL, 0, 0); // required so the next menu activates
   tray_log("menu result cmd=%d", cmd);
   DestroyMenu(menu);
+  g_menu_open = 0;
   if (cmd == IDM_QUIT) PostMessageW(wnd, WM_CLOSE, 0, 0);
   else if (cmd == IDM_STARTUP) { startup_set(!startup_is_enabled()); }
   else if (cmd == IDM_ONOFF) { st->enabled = !st->enabled; tracker_repaint_all(); }

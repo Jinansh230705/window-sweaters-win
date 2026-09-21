@@ -1,6 +1,7 @@
 // tracker.c — EnumWindows-based window tracking (replaces SLS queries).
 #include "tracker.h"
 #include "overlay.h"
+#include "tray.h"
 #include "../core/table.h"
 #include "../core/apps.h"
 #include "../core/knit_core.h"
@@ -103,6 +104,10 @@ void tracker_shutdown(void) {
 void tracker_set_focus(HWND fg) { g_focused = fg; }
 
 void tracker_refresh_full(void) {
+  // A modal popup menu owns the thread: any sync work here would run inside
+  // TrackPopupMenu's nested loop and freeze menu navigation behind paint
+  // storms. The queued hints drain right after the menu closes.
+  if (tray_menu_open()) return;
   EnumWindows(enum_cb, 0);
   // prune dead / unsuitable / disallowed
   int n = g_map.count;
@@ -135,6 +140,7 @@ void tracker_refresh_full(void) {
 // the reconcile timer does full enum periodically. No reorder here — the
 // caller reorders only when a z-order-affecting event arrived.
 void tracker_on_hint(void) {
+  if (tray_menu_open()) return; // modal menu owns the thread; see above
   HWND fg = GetForegroundWindow();
   g_focused = fg;
   for (int i = 0; i < g_map.capacity; i++)
