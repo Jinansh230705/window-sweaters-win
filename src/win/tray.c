@@ -3,6 +3,8 @@
 #include "tracker.h"
 #include "prefs.h"
 #include "startup.h"
+#include "../../resource.h"
+#include <shellapi.h>
 #include "../core/knit_core.h"
 #include "../core/charts.h"
 #include "../core/apps.h"
@@ -32,11 +34,23 @@ void tray_install(HWND wnd, UINT cb) {
   memset(&ni, 0, sizeof ni);
   ni.cbSize = sizeof ni; ni.hWnd = wnd; ni.uID = 1; ni.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
   ni.uCallbackMessage = cb;
-  ni.hIcon = LoadIconW(NULL, IDI_APPLICATION);
+  ni.hIcon = LoadIconW(GetModuleHandleW(NULL), MAKEINTRESOURCEW(IDI_APP));
+  if (!ni.hIcon) ni.hIcon = LoadIconW(NULL, IDI_APPLICATION);
   wcscpy_s(ni.szTip, 128, L"Window Sweaters");
   Shell_NotifyIconW(NIM_ADD, &ni);
   ni.uVersion = NOTIFYICON_VERSION_4;
   Shell_NotifyIconW(NIM_SETVERSION, &ni);
+  // First launch only: point the user at the icon, since stock Windows hides
+  // new tray icons in the overflow popup.
+  if (prefs_take_welcome()) {
+    NOTIFYICONDATAW b;
+    memset(&b, 0, sizeof b);
+    b.cbSize = sizeof b; b.hWnd = wnd; b.uID = 1;
+    b.uFlags = NIF_INFO; b.dwInfoFlags = NIIF_INFO;
+    wcscpy_s(b.szInfoTitle, 64, L"Window Sweaters");
+    wcscpy_s(b.szInfo, 256, L"Running — click the yarn icon for patterns, apps, startup, and quit.");
+    Shell_NotifyIconW(NIM_MODIFY, &b);
+  }
 }
 void tray_remove(HWND wnd) { (void)wnd; Shell_NotifyIconW(NIM_DELETE, &ni); }
 void tray_update_tip(HWND wnd) { (void)wnd; Shell_NotifyIconW(NIM_MODIFY, &ni); }
@@ -50,6 +64,12 @@ static void collect(HWND h, const char* app, DWORD pid, void* ctx) {
 }
 
 void tray_show_menu(HWND wnd) {
+  // De-dupe: a single click can arrive as both NIN_SELECT and a button-up.
+  // Without this the menu opens, closes, and immediately reopens.
+  static ULONGLONG last = 0;
+  ULONGLONG now = GetTickCount64();
+  if (now - last < 800) return;
+  last = now;
   struct settings* st = tracker_settings();
   HMENU menu = CreatePopupMenu();
   AppendMenuA(menu, MF_STRING | (st->enabled ? MF_CHECKED : 0), IDM_ONOFF, st->enabled ? "Sweaters: On" : "Sweaters: Off");
@@ -102,6 +122,7 @@ void tray_show_menu(HWND wnd) {
   POINT p; GetCursorPos(&p);
   SetForegroundWindow(wnd);
   int cmd = TrackPopupMenu(menu, TPM_RETURNCMD | TPM_NONOTIFY | TPM_RIGHTBUTTON, p.x, p.y, 0, wnd, NULL);
+  PostMessageW(wnd, WM_NULL, 0, 0); // required so the next menu activates
   DestroyMenu(menu);
   if (cmd == IDM_QUIT) PostMessageW(wnd, WM_CLOSE, 0, 0);
   else if (cmd == IDM_STARTUP) { startup_set(!startup_is_enabled()); }

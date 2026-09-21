@@ -5,3 +5,5 @@
 #include "../core/config.h"
 void prefs_load(struct settings* st);
 void prefs_save(void);
+// 1 once ever (then persists), for the first-run tray balloon.
+int prefs_take_welcome(void);

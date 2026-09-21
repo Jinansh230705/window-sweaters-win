@@ -21,6 +21,8 @@ static void ini_path(char* out, size_t n) {
   }
 }
 
+static int g_welcomed = 1; // assumed seen until prefs prove otherwise
+
 void prefs_load(struct settings* st) {
   char ini[MAX_PATH];
   ini_path(ini, sizeof ini);
@@ -47,12 +49,20 @@ void prefs_load(struct settings* st) {
   int on_by_default = GetPrivateProfileIntA("apps", "on_by_default", 1, ini) != 0;
   knit_apps_set_all(on_by_default ? true : false);
   GetPrivateProfileStringA("apps", "exceptions", "", buf, sizeof buf, ini);
+  g_welcomed = GetPrivateProfileIntA("sweaters", "welcomed", 0, ini) != 0;
   char* ctx = NULL;
   for (char* t = strtok_s(buf, ",", &ctx); t; t = strtok_s(NULL, ",", &ctx)) {
     while (*t == ' ') t++;
     if (*t) knit_app_set_hidden(t, on_by_default ? true : false);
   }
   knit_flush_cache();
+}
+
+int prefs_take_welcome(void) {
+  if (g_welcomed) return 0;
+  g_welcomed = 1;
+  prefs_save();
+  return 1;
 }
 
 void prefs_save(void) {
@@ -77,6 +87,7 @@ void prefs_save(void) {
   snprintf(buf, sizeof buf, "%.2f", g_knit.rows);
   WritePrivateProfileStringA("sweaters", "gauge", buf, ini);
   WritePrivateProfileStringA("sweaters", "knit", g_knit_on ? "1" : "0", ini);
+  WritePrivateProfileStringA("sweaters", "welcomed", g_welcomed ? "1" : "0", ini);
   int def = knit_apps_on_by_default() ? 1 : 0;
   WritePrivateProfileStringA("apps", "on_by_default", def ? "1" : "0", ini);
   char exc[2048] = {0}; size_t o = 0;

@@ -23,8 +23,13 @@ static LRESULT CALLBACK wndproc(HWND h, UINT m, WPARAM w, LPARAM l) {
     case WM_TRAY:
       // The icon lives in the notification overflow ("hidden icons") on
       // stock Windows 11; any click — left, right, or double — opens the
-      // menu, whose last item quits the app.
-      if (l == WM_RBUTTONUP || l == WM_LBUTTONUP || l == WM_LBUTTONDBLCLK) tray_show_menu(h);
+      // menu, whose last item quits the app. NIN_SELECT/KEYSELECT are the
+      // NOTIFYICON_VERSION_4 activation messages: on some builds a left
+      // click in the overflow arrives ONLY as NIN_SELECT, never as a
+      // button-up, so handling just the button messages shows no menu.
+      if (l == WM_RBUTTONUP || l == WM_LBUTTONUP || l == WM_LBUTTONDBLCLK
+          || l == WM_RBUTTONDBLCLK || l == NIN_SELECT || l == NIN_KEYSELECT)
+        tray_show_menu(h);
       return 0;
     case WM_HINT: {
       // Collapse event storms: one sync per pump, never a backlog. Reorder

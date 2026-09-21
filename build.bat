@@ -6,10 +6,14 @@ if exist %VSDEV% call %VSDEV% -arch=x64 >nul
 where cl >nul 2>&1
 if errorlevel 1 ( echo [x] cl.exe not found. Install VS Build Tools + Windows SDK. & exit /b 1 )
 if not exist out mkdir out
-cl /nologo /O2 /W3 /DUNICODE /D_UNICODE /I src\core /I src\win /Fo"out\\" ^
+where rc >nul 2>&1
+if errorlevel 1 ( echo [x] rc.exe not found on PATH & exit /b 1 )
+rc /nologo /fo out\app.res app.rc
+if errorlevel 1 ( echo [x] resource compile failed & exit /b 1 )
+cl /nologo /O2 /W3 /DUNICODE /D_UNICODE /I src\core /I src\win /I . /Fo"out\\" ^
   src\core\table.c src\core\parse.c src\core\apps.c src\core\charts.c src\core\knit_core.c ^
   src\win\knit_gdi.c src\win\overlay.c src\win\tracker.c src\win\events.c ^
-  src\win\autoyarn.c src\win\tray.c src\win\ipc.c src\win\prefs.c src\win\startup.c src\win\main_win.c ^
+  src\win\autoyarn.c src\win\tray.c src\win\ipc.c src\win\prefs.c src\win\startup.c src\win\main_win.c out\app.res ^
   /Fe:out\WindowSweaters.exe /link dwmapi.lib shell32.lib gdi32.lib user32.lib ole32.lib windowscodecs.lib advapi32.lib
 if errorlevel 1 ( echo [x] build failed & exit /b 1 )
 echo [ok] out\WindowSweaters.exe
