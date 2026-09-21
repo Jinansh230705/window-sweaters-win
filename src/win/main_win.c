@@ -37,6 +37,7 @@ static LRESULT CALLBACK wndproc(HWND h, UINT m, WPARAM w, LPARAM l) {
       // NOTIFYICON_VERSION_4 activation messages: on some builds a left
       // click in the overflow arrives ONLY as NIN_SELECT, never as a
       // button-up, so handling just the button messages shows no menu.
+      tray_log("tray event l=0x%x w=%u", (unsigned)l, (unsigned)w);
       if (l == WM_RBUTTONUP || l == WM_LBUTTONUP || l == WM_LBUTTONDBLCLK
           || l == WM_RBUTTONDBLCLK || l == NIN_SELECT || l == NIN_KEYSELECT)
         tray_show_menu(h);

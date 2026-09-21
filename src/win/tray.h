@@ -5,3 +5,4 @@ void tray_install(HWND wnd, UINT cb_msg);
 void tray_remove(HWND wnd);
 void tray_show_menu(HWND wnd);
 void tray_update_tip(HWND wnd);
+void tray_log(const char* fmt, ...);

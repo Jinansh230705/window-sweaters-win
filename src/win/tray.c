@@ -9,6 +9,8 @@
 #include "../core/charts.h"
 #include "../core/apps.h"
 #include <stdio.h>
+#include <string.h>
+#include <stdarg.h>
 #include <math.h>
 
 #define IDM_ONOFF 1001
@@ -30,6 +32,40 @@ static const char* kStitchName[] = { "Fine", "Regular", "Chunky" };
 
 static NOTIFYICONDATAW ni;
 
+// Debug trail: %TEMP%\ws_tray.log records registration results and every
+// callback the shell delivers. If clicks do nothing, this file says whether
+// the shell ever delivered them.
+#include <stdarg.h>
+void tray_log(const char* fmt, ...) {
+  char path[MAX_PATH] = {0};
+  if (!GetEnvironmentVariableA("TEMP", path, sizeof path)) return;
+  size_t n = strlen(path);
+  snprintf(path + n, sizeof path - n, "\\ws_tray.log");
+  HANDLE h = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL,
+                         OPEN_EXISTING, 0, NULL);
+  if (h != INVALID_HANDLE_VALUE) {
+    LARGE_INTEGER sz = {0};
+    if (GetFileSizeEx(h, &sz) && sz.QuadPart > 65536) {
+      CloseHandle(h);
+      DeleteFileA(path);
+      h = INVALID_HANDLE_VALUE;
+    } else CloseHandle(h);
+  }
+  FILE* f = NULL;
+  fopen_s(&f, path, "a");
+  if (!f) return;
+  SYSTEMTIME st;
+  GetLocalTime(&st);
+  fprintf(f, "[%02d:%02d:%02d build " __DATE__ " " __TIME__ "] ",
+          st.wHour, st.wMinute, st.wSecond);
+  va_list va;
+  va_start(va, fmt);
+  vfprintf(f, fmt, va);
+  va_end(va);
+  fputc('\n', f);
+  fclose(f);
+}
+
 void tray_install(HWND wnd, UINT cb) {
   memset(&ni, 0, sizeof ni);
   ni.cbSize = sizeof ni; ni.hWnd = wnd; ni.uID = 1; ni.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
@@ -37,9 +73,12 @@ void tray_install(HWND wnd, UINT cb) {
   ni.hIcon = LoadIconW(GetModuleHandleW(NULL), MAKEINTRESOURCEW(IDI_APP));
   if (!ni.hIcon) ni.hIcon = LoadIconW(NULL, IDI_APPLICATION);
   wcscpy_s(ni.szTip, 128, L"Window Sweaters");
-  Shell_NotifyIconW(NIM_ADD, &ni);
+  BOOL add = Shell_NotifyIconW(NIM_ADD, &ni);
+  tray_log("NIM_ADD hwnd=%p icon=%p ret=%d err=%u", (void*)wnd, (void*)ni.hIcon,
+           (int)add, (unsigned)GetLastError());
   ni.uVersion = NOTIFYICON_VERSION_4;
-  Shell_NotifyIconW(NIM_SETVERSION, &ni);
+  BOOL ver = Shell_NotifyIconW(NIM_SETVERSION, &ni);
+  tray_log("NIM_SETVERSION ret=%d err=%u", (int)ver, (unsigned)GetLastError());
   // First launch only: point the user at the icon, since stock Windows hides
   // new tray icons in the overflow popup.
   if (prefs_take_welcome()) {
@@ -123,6 +162,7 @@ void tray_show_menu(HWND wnd) {
   SetForegroundWindow(wnd);
   int cmd = TrackPopupMenu(menu, TPM_RETURNCMD | TPM_NONOTIFY | TPM_RIGHTBUTTON, p.x, p.y, 0, wnd, NULL);
   PostMessageW(wnd, WM_NULL, 0, 0); // required so the next menu activates
+  tray_log("menu result cmd=%d", cmd);
   DestroyMenu(menu);
   if (cmd == IDM_QUIT) PostMessageW(wnd, WM_CLOSE, 0, 0);
   else if (cmd == IDM_STARTUP) { startup_set(!startup_is_enabled()); }
