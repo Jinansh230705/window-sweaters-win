@@ -30,7 +30,8 @@ rectangles via DWM and draws its own transparent overlays.
 ## Use it
 
 Click the yarn tray icon (it lives in the notification overflow — the `^`
-hidden-icons popup — on stock Windows 11; any click opens the menu):
+hidden-icons popup — on stock Windows 11; any click opens the menu). Can't
+find it? Press **Ctrl+Alt+W** anywhere to pop the same menu at your cursor.
 
 - **Sweaters: On/Off** — pause everything without quitting.
 - **Pattern** — `By App` (default), `None (plain)`, or any chart globally.

@@ -17,6 +17,7 @@
 
 #define WM_TRAY (WM_APP + 1)
 #define WM_HINT (WM_APP + 2)
+#define HOTKEY_MENU 1
 
 // Re-registration message: explorer wipes all tray icons on restart/crash.
 // Without this the app keeps running with no icon and no way back in.
@@ -53,10 +54,14 @@ static LRESULT CALLBACK wndproc(HWND h, UINT m, WPARAM w, LPARAM l) {
     case WM_TIMER:
       tracker_on_hint(); // light sync only; full EnumWindows lives in reconcile
       return 0;
+    case WM_HOTKEY:
+      if (w == HOTKEY_MENU) tray_show_menu(h);
+      return 0;
     case WM_CLOSE:
       // Explicit teardown first so Quit is instant even under an event storm:
       // stop timers/hooks, destroy every overlay, remove the tray icon.
       prefs_save();
+      UnregisterHotKey(h, HOTKEY_MENU);
       reconcile_stop();
       events_uninstall();
       KillTimer(h, 1);
@@ -132,6 +137,9 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, LPWSTR cmd, int show) {
   tray_install(msg, WM_TRAY);
   events_install(msg, WM_HINT);
   reconcile_start(msg, WM_HINT, 500); // full EnumWindows safety net, 2Hz
+  // Guaranteed way to reach the menu even if the tray icon is buried:
+  // Ctrl+Alt+W pops it at the cursor.
+  RegisterHotKey(msg, HOTKEY_MENU, MOD_CONTROL | MOD_ALT, 'W');
   ipc_set_quit_window(msg);
   ipc_serve_begin();
   run_sweatersrc();
