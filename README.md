@@ -4,6 +4,8 @@ A Windows tray app that dresses your windows in knitted borders — cosy yarn
 rings in colours inspired by your favourite apps. A full port of the macOS
 original to native Win32 (C, no frameworks, no runtime).
 
+<img width="1536" height="1024" alt="preview" src="https://github.com/user-attachments/assets/b6a82eb9-d813-410e-9bed-8bcba73f7b35" />
+
 ## Features
 
 - **By App colourways** for 40+ apps (VS Code, Chrome, Spotify, Slack, Office,
