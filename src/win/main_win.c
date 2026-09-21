@@ -18,7 +18,16 @@
 #define WM_TRAY (WM_APP + 1)
 #define WM_HINT (WM_APP + 2)
 
+// Re-registration message: explorer wipes all tray icons on restart/crash.
+// Without this the app keeps running with no icon and no way back in.
+static UINT WM_TASKBARCREATED = 0;
+
 static LRESULT CALLBACK wndproc(HWND h, UINT m, WPARAM w, LPARAM l) {
+  if (WM_TASKBARCREATED && m == WM_TASKBARCREATED) {
+    tray_remove(h);
+    tray_install(h, WM_TRAY);
+    return 0;
+  }
   switch (m) {
     case WM_TRAY:
       // The icon lives in the notification overflow ("hidden icons") on
@@ -118,6 +127,7 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, LPWSTR cmd, int show) {
   c.lpfnWndProc = wndproc; c.hInstance = inst; c.lpszClassName = L"WindowSweatersMsg";
   RegisterClassW(&c);
   HWND msg = CreateWindowW(L"WindowSweatersMsg", L"", 0, 0, 0, 0, 0, NULL, NULL, inst, NULL);
+  WM_TASKBARCREATED = RegisterWindowMessageW(L"TaskbarCreated");
 
   tray_install(msg, WM_TRAY);
   events_install(msg, WM_HINT);
