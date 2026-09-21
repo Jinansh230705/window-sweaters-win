@@ -1,0 +1,18 @@
+# Build outputs
+out/
+*.obj
+*.pdb
+*.ilk
+*.exp
+*.lib
+*.pch
+
+# Editor / OS
+.vs/
+.vscode/
+*.user
+Desktop.ini
+Thumbs.db
+
+# Local settings (user's own sweaters live here, not in git)
+# %APPDATA%\WindowSweaters\settings.ini is per-machine by design.
