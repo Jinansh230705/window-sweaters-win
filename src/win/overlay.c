@@ -85,13 +85,17 @@ void sweater_place_below(struct sweater* s) {
 }
 
 int sweater_sync(struct sweater* s, struct settings* st, int focused) {
-  if (!IsWindow(s->target)) return 0;
+  // Fail closed: a dead target must never leave a stranded ring behind.
+  if (!IsWindow(s->target)) { sweater_hide(s); return 0; }
   // Hidden states first: never show or move the overlay for these.
   if (!st->enabled || !g_knit_on) { sweater_hide(s); return 0; }
   if (!IsWindowVisible(s->target) || IsIconic(s->target)) { sweater_hide(s); return 0; }
-  // cloaked (virtual desktop / minimized owner)
+  // cloaked (virtual desktop / minimized owner). A failed query means DWM
+  // has no representation of this window — also hide, never guess.
   int cloaked = 0;
-  DwmGetWindowAttribute(s->target, DWMWA_CLOAKED, &cloaked, sizeof cloaked);
+  if (FAILED(DwmGetWindowAttribute(s->target, DWMWA_CLOAKED, &cloaked, sizeof cloaked))) {
+    sweater_hide(s); return 0;
+  }
   if (cloaked) { sweater_hide(s); return 0; }
   RECT fr;
   if (!target_frame(s->target, &fr)) { sweater_hide(s); return 0; }

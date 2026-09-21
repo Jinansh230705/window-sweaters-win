@@ -113,18 +113,20 @@ void tracker_refresh_full(void) {
   int n = g_map.count;
   HWND* dead = n ? (HWND*)malloc(sizeof(HWND) * n) : NULL;
   int nd = 0;
-  for (int i = 0; i < g_map.capacity; i++)
-    for (struct bucket* b = g_map.buckets[i]; b; b = b->next) {
-      struct sweater* s = (struct sweater*)b->value;
-      HWND h = *(HWND*)b->key;
-      if (!IsWindow(h) || !suitable(h)) { dead[nd++] = h; continue; }
-      char app[64] = {0}; DWORD pid = 0;
-      if (!exe_of(h, app, sizeof app, &pid) || !app_allowed(app, pid)) dead[nd++] = h;
+  if (dead || !n) {
+    for (int i = 0; i < g_map.capacity; i++)
+      for (struct bucket* b = g_map.buckets[i]; b; b = b->next) {
+        struct sweater* s = (struct sweater*)b->value;
+        HWND h = *(HWND*)b->key;
+        if (!IsWindow(h) || !suitable(h)) { dead[nd++] = h; continue; }
+        char app[64] = {0}; DWORD pid = 0;
+        if (!exe_of(h, app, sizeof app, &pid) || !app_allowed(app, pid)) dead[nd++] = h;
+      }
+    for (int i = 0; i < nd; i++) {
+      struct sweater* s = table_find(&g_map, &dead[i]);
+      if (s) sweater_destroy(s);
+      table_remove(&g_map, &dead[i]);
     }
-  for (int i = 0; i < nd; i++) {
-    struct sweater* s = table_find(&g_map, &dead[i]);
-    if (s) sweater_destroy(s);
-    table_remove(&g_map, &dead[i]);
   }
   free(dead);
   HWND fg = GetForegroundWindow();
@@ -141,6 +143,24 @@ void tracker_refresh_full(void) {
 // caller reorders only when a z-order-affecting event arrived.
 void tracker_on_hint(void) {
   if (tray_menu_open()) return; // modal menu owns the thread; see above
+  // Retire dead targets immediately instead of skipping them: a skipped
+  // entry keeps a stranded overlay until the next full reconcile.
+  int n = g_map.count;
+  HWND* dead = n ? (HWND*)malloc(sizeof(HWND) * n) : NULL;
+  int nd = 0;
+  if (dead || !n) {
+    for (int i = 0; i < g_map.capacity; i++)
+      for (struct bucket* b = g_map.buckets[i]; b; b = b->next) {
+        struct sweater* s = (struct sweater*)b->value;
+        if (s && !IsWindow(s->target)) dead[nd++] = *(HWND*)b->key;
+      }
+    for (int i = 0; i < nd; i++) {
+      struct sweater* s = table_find(&g_map, &dead[i]);
+      if (s) sweater_destroy(s);
+      table_remove(&g_map, &dead[i]);
+    }
+  }
+  free(dead);
   HWND fg = GetForegroundWindow();
   g_focused = fg;
   for (int i = 0; i < g_map.capacity; i++)
