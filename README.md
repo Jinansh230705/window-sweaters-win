@@ -1,20 +1,8 @@
-# Window Sweaters for Windows 🧶
+# Window Sweaters for Windows
 
 A Windows tray app that dresses your windows in knitted borders — cosy yarn
 rings in colours inspired by your favourite apps. A full port of the macOS
 original to native Win32 (C, no frameworks, no runtime).
-
-## Credits
-
-- **Original app:** [Window Sweaters](https://github.com/saragordic/window-sweaters)
-  by [Sara Gordic](https://github.com/saragordic) (macOS, GPL-3.0). All pattern
-  artwork, colourways, and knit-shading maths originate there.
-- The original is built on [JankyBorders](https://github.com/FelixKratz/JankyBorders)
-  by Felix Kratz — see [NOTICE.md](NOTICE.md).
-- This port reuses the upstream collection data, palettes, matching logic and
-  shading algorithms verbatim where possible, and re-implements only the
-  Apple-only shell (SkyLight overlays, AppKit menu, Mach IPC) with Windows
-  natives. Licensed under the same [GPL-3.0](LICENSE).
 
 ## Features
 
@@ -122,6 +110,18 @@ clones; no `yabai` bridge; resize repaints at ~20fps instead of hiding.
 (portable knit logic) free of Win32 calls; Windows specifics belong in
 `src/win`. Upstream pattern data changes should be ported cell-for-cell from
 the original repo's `src/chart.c` / `src/apps.c`.
+
+## Credits
+
+- **Original app:** [Window Sweaters](https://github.com/saragordic/window-sweaters)
+  by [Sara Gordic](https://github.com/saragordic) (macOS, GPL-3.0). All pattern
+  artwork, colourways, and knit-shading maths originate there.
+- The original is built on [JankyBorders](https://github.com/FelixKratz/JankyBorders)
+  by Felix Kratz — see [NOTICE.md](NOTICE.md).
+- This port reuses the upstream collection data, palettes, matching logic and
+  shading algorithms verbatim where possible, and re-implements only the
+  Apple-only shell (SkyLight overlays, AppKit menu, Mach IPC) with Windows
+  natives. Licensed under the same [GPL-3.0](LICENSE).
 
 ## License
 
