@@ -1,4 +1,5 @@
-# Builds on every push/PR; publishes a Release zip on v* tags.
+# Builds on every push/PR. Every main push refreshes a rolling "latest"
+# release; pushing a v* tag additionally publishes a versioned release.
 name: build
 
 on:
@@ -34,7 +35,7 @@ jobs:
           path: dist/
 
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: github.event_name == 'push'
     needs: build
     runs-on: windows-latest
     permissions:
@@ -49,7 +50,21 @@ jobs:
         shell: pwsh
         run: Compress-Archive -Path dist\* -DestinationPath WindowSweaters-${{ github.ref_name }}.zip
 
-      - name: Publish release
+      # Rolling release: refreshed after every commit on main, so there is
+      # always a downloadable build without cutting a version tag.
+      - name: Publish rolling release
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Latest build (main)
+          prerelease: true
+          files: WindowSweaters-${{ github.ref_name }}.zip
+          generate_release_notes: true
+
+      # Versioned release: push a v* tag (e.g. v1.0.0) to cut a stable release.
+      - name: Publish versioned release
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           files: WindowSweaters-${{ github.ref_name }}.zip
