@@ -1,5 +1,7 @@
-# Builds on every push/PR. Every main push refreshes a rolling "latest"
-# release; pushing a v* tag additionally publishes a versioned release.
+# Builds on every push/PR. Releases are versioned only: push a v* tag (or
+# draft a release on the website) to publish WindowSweaters.exe. There is
+# deliberately no rolling "latest" release — refreshing one tag forever
+# stacks duplicate changelog entries and reads as a mess.
 name: build
 
 on:
@@ -52,17 +54,7 @@ jobs:
           path: dist/
 
       # The release asset is the built exe itself — download, unblock, run.
-      - name: Publish rolling release
-        if: github.ref == 'refs/heads/main'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: latest
-          name: Latest build (main)
-          prerelease: false
-          files: dist/WindowSweaters.exe
-          generate_release_notes: true
-
-      # Versioned release: push a v* tag (e.g. v1.0.0), or draft it on the
+      # Versioned release: push a v* tag (e.g. v1.0.1), or draft it on the
       # website — both paths build the exe from scratch and attach it, so a
       # tagged release never ships source-code zips only.
       - name: Publish versioned release

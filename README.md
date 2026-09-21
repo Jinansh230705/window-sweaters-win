@@ -86,7 +86,7 @@ build.bat
 Produces `out\WindowSweaters.exe` and runs the headless render test
 (`out\tile_test.exe` → `out\tile_test.bmp`). Every push is also built by
 [GitHub Actions](.github/workflows/build.yml); pushing a `v*` tag publishes a
-Release zip automatically.
+versioned Release carrying the exe.
 
 ## Porting notes
 
